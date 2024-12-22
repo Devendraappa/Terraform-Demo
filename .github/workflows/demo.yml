@@ -97,7 +97,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: terraform-logs
-          path: $GITHUB_WORKSPACE/logs/
+          path: logs/
 
       # Step 12: Force Workflow Failure if Terraform fails
       - name: Force Workflow Failure if Critical Steps Fail
