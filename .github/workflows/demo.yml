@@ -90,7 +90,16 @@ jobs:
           echo "Files in logs directory:"
           ls -alh $GITHUB_WORKSPACE/logs/
 
-      # Step 11: Upload Terraform Logs as Artifacts (Always, even on failure)
+      # Step 11: Print Logs on Failure
+      - name: Print Logs on Failure
+        if: failure()  # Print logs only if failure occurs
+        run: |
+          echo "Terraform failed. Logs are as follows:"
+          cat $GITHUB_WORKSPACE/logs/terraform_validate.log || true
+          cat $GITHUB_WORKSPACE/logs/terraform_plan.log || true
+          cat $GITHUB_WORKSPACE/logs/terraform_apply.log || true
+
+      # Step 12: Upload Terraform Logs as Artifacts (Always, even on failure)
       - name: Upload Terraform Logs as Artifacts
         if: always()  # Ensure this runs even if the workflow fails
         uses: actions/upload-artifact@v3
@@ -98,7 +107,7 @@ jobs:
           name: terraform-logs
           path: $GITHUB_WORKSPACE/logs/
 
-      # Step 12: Mark Workflow as Failed if Critical Steps Fail
+      # Step 13: Mark Workflow as Failed if Critical Steps Fail
       - name: Mark Workflow as Failed if Critical Steps Fail
         if: failure()  # Trigger this only if the previous steps failed
         run: |
