@@ -37,27 +37,24 @@ jobs:
 
       # Step 5: Terraform Validate
       - name: Terraform Validate
-        continue-on-error: true  # Continue even on error to capture logs
+        run: terraform validate  # Remove continue-on-error: true to force failure on error
         env:
           TF_LOG: DEBUG
           TF_LOG_PATH: terraform_validate.log
-        run: terraform validate
 
       # Step 6: Terraform Plan
       - name: Terraform Plan
-        continue-on-error: true  # Continue even on error to capture logs
+        run: terraform plan -out=tfplan  # Remove continue-on-error: true to force failure on error
         env:
           TF_LOG: INFO
           TF_LOG_PATH: terraform_plan.log
-        run: terraform plan -out=tfplan
 
       # Step 7: Terraform Apply
       - name: Terraform Apply
-        continue-on-error: true  # Continue even on error to capture logs
+        run: terraform apply -auto-approve tfplan  # Remove continue-on-error: true to force failure on error
         env:
           TF_LOG: TRACE
           TF_LOG_PATH: terraform_apply.log
-        run: terraform apply -auto-approve tfplan
 
       # Step 8: Ensure Logs Directory Exists
       - name: Ensure Logs Directory Exists
