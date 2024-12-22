@@ -2,33 +2,77 @@ name: Destroy Terraform Workflow
 
 on:
   workflow_dispatch:
+
 permissions:
   contents: read
   id-token: write
 
 jobs:
   terraform:
-    name: Terraform Workflow
+    name: Terraform Destroy Workflow
     runs-on: ubuntu-latest
 
     steps:
+    # Step 1: Checkout code
     - name: Checkout code
       uses: actions/checkout@v3
 
+    # Step 2: Setup Terraform
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
       with:
         terraform_version: 1.5.6
 
+    # Step 3: Configure AWS Credentials using OIDC
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v2
       with:
         role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ secrets.ROLE_NAME }}
         aws-region: ${{ secrets.AWS_REGION }}
         role-session-name: TerraformDestroySession
-        
+
+    # Step 4: Initialize Terraform
     - name: Terraform Init
       run: terraform init
 
+    # Step 5: Terraform Destroy
     - name: Terraform Destroy
+      continue-on-error: true  # Continue even on error to capture logs
       run: terraform destroy -auto-approve
+
+    # Step 6: Ensure Logs Directory Exists
+    - name: Ensure Logs Directory Exists
+      run: mkdir -p $GITHUB_WORKSPACE/logs
+
+    # Step 7: Copy Terraform Destroy Logs to Logs Directory
+    - name: Copy Terraform Destroy Logs to Logs Directory
+      run: |
+        echo "Checking if log files exist"
+        if [ -f terraform_destroy.log ]; then
+          echo "terraform_destroy.log exists, copying to logs directory."
+          cp terraform_destroy.log $GITHUB_WORKSPACE/logs/
+        fi
+        echo "Files in logs directory:"
+        ls -alh $GITHUB_WORKSPACE/logs/
+
+    # Step 8: Print Logs on Failure
+    - name: Print Logs on Failure
+      if: failure()  # Only print logs if failure occurs
+      run: |
+        echo "Terraform Destroy failed. Logs are as follows:"
+        cat $GITHUB_WORKSPACE/logs/terraform_destroy.log || true
+
+    # Step 9: Upload Terraform Destroy Logs as Artifacts (Always, even on failure)
+    - name: Upload Terraform Destroy Logs as Artifacts
+      if: always()  # Ensure this runs even if the workflow fails
+      uses: actions/upload-artifact@v3
+      with:
+        name: terraform-destroy-logs
+        path: $GITHUB_WORKSPACE/logs/
+
+    # Step 10: Force Workflow Failure if Terraform Destroy fails
+    - name: Force Workflow Failure if Terraform Destroy fails
+      if: failure()  # Trigger this only if the previous steps failed
+      run: |
+        echo "Terraform Destroy failed. Marking workflow as failed."
+        exit 1  # Force failure to mark the workflow as failed
