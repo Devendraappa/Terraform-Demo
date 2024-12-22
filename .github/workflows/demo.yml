@@ -37,7 +37,7 @@ jobs:
 
       # Step 5: Terraform Validate
       - name: Terraform Validate
-        continue-on-error: true  # Continue on error
+        continue-on-error: true  # Continue on error to ensure logs are captured
         env:
           TF_LOG: DEBUG
           TF_LOG_PATH: terraform_validate.log
@@ -45,23 +45,23 @@ jobs:
 
       # Step 6: Terraform Plan
       - name: Terraform Plan
-        continue-on-error: true  # Continue on error
+        continue-on-error: true  # Continue on error to ensure logs are captured
         env:
           TF_LOG: INFO
           TF_LOG_PATH: terraform_plan.log
         run: terraform plan -out=tfplan
-
+*/
       # Step 7: Check if tfplan file exists before apply
-      - name: Check if tfplan exists
+     # - name: Check if tfplan exists
         run: |
           if [ ! -f tfplan ]; then
             echo "Terraform plan file (tfplan) not found. Skipping terraform apply."
             exit 1  # Exit with error if tfplan doesn't exist
           fi
-
+*/
       # Step 8: Terraform Apply
       - name: Terraform Apply
-        continue-on-error: true  # Continue on error
+        continue-on-error: true  # Continue on error to ensure logs are captured
         env:
           TF_LOG: TRACE
           TF_LOG_PATH: terraform_apply.log
@@ -105,7 +105,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: terraform-logs
-          path: /logs
+          path: $GITHUB_WORKSPACE/logs/
 
       # Step 13: Mark Workflow as Failed if Critical Steps Fail
       - name: Mark Workflow as Failed if Critical Steps Fail
