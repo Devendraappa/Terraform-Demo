@@ -56,18 +56,26 @@ jobs:
           TF_LOG_PATH: terraform_apply.log
         run: terraform apply -auto-approve tfplan
 
-      # Step 8: Upload Artifacts (Logs)
+      # Step 8: Capture Logs and Save as Artifacts
+      - name: Capture Logs and Save as Artifacts
+        if: always()  # Ensure this step runs even if the previous steps fail
+        run: |
+          mkdir -p $GITHUB_WORKSPACE/logs
+          # Save logs generated during the workflow
+          cp terraform_validate.log $GITHUB_WORKSPACE/logs/
+          cp terraform_plan.log $GITHUB_WORKSPACE/logs/
+          cp terraform_apply.log $GITHUB_WORKSPACE/logs/
+        continue-on-error: true  # Ensure this step doesn't stop the workflow if something fails
+
+      # Step 9: Upload Logs as Artifacts
       - name: Upload Terraform Logs as Artifacts
         if: always()  # Upload artifacts even if the workflow fails
         uses: actions/upload-artifact@v3
         with:
           name: terraform-logs
-          path: |
-            terraform_validate.log
-            terraform_plan.log
-            terraform_apply.log
+          path: $GITHUB_WORKSPACE/logs
 
-      # Step 9: Print Logs on Failure
+      # Step 10: Print Logs on Failure
       - name: Print Logs on Failure
         if: failure()
         run: |
