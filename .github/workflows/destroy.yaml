@@ -68,7 +68,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: terraform-destroy-logs
-        path: $GITHUB_WORKSPACE/logs/
+        path: logs/
 
     # Step 10: Force Workflow Failure if Terraform Destroy fails
     - name: Force Workflow Failure if Terraform Destroy fails
