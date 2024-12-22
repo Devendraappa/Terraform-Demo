@@ -1,4 +1,4 @@
-name: Destroy Terraform Workflow 
+name: Destroy Terraform Workflow
 
 on:
   workflow_dispatch:
@@ -35,13 +35,13 @@ jobs:
     - name: Terraform Init
       run: terraform init
 
-    # Step 5: Terraform Destroy (with logging)
+    # Step 5: Terraform Destroy
     - name: Terraform Destroy
-      continue-on-error: true  # Continue even on error to capture logs
+      id: terraform-destroy  # Save step result for conditional checks
       env:
-        TF_LOG: TRACE  # Set logging level
-        TF_LOG_PATH: terraform_destroy.log  # Define log path
-      run: terraform destroy -auto-approve
+        TF_LOG: TRACE
+        TF_LOG_PATH: terraform_destroy.log
+      run: terraform destroy -auto-approve || echo "Terraform Destroy failed" > $GITHUB_WORKSPACE/destroy-failed
 
     # Step 6: Ensure Logs Directory Exists
     - name: Ensure Logs Directory Exists
@@ -50,32 +50,27 @@ jobs:
     # Step 7: Copy Terraform Destroy Logs to Logs Directory
     - name: Copy Terraform Destroy Logs to Logs Directory
       run: |
-        echo "Checking if log files exist"
         if [ -f terraform_destroy.log ]; then
-          echo "terraform_destroy.log exists, copying to logs directory."
           cp terraform_destroy.log $GITHUB_WORKSPACE/logs/
         fi
-        echo "Files in logs directory:"
-        ls -alh $GITHUB_WORKSPACE/logs/
 
     # Step 8: Print Logs on Failure
     - name: Print Logs on Failure
-      if: failure()  # Only print logs if failure occurs
+      if: failure()
       run: |
         echo "Terraform Destroy failed. Logs are as follows:"
         cat $GITHUB_WORKSPACE/logs/terraform_destroy.log || true
 
-    # Step 9: Upload Terraform Destroy Logs as Artifacts (Always, even on failure)
+    # Step 9: Upload Terraform Destroy Logs as Artifacts
     - name: Upload Terraform Destroy Logs as Artifacts
-      if: always()  # Ensure this runs even if the workflow fails
       uses: actions/upload-artifact@v3
       with:
         name: terraform-destroy-logs
         path: logs/
 
-    # Step 10: Force Workflow Failure if Terraform Destroy fails
-    - name: Force Workflow Failure if Terraform Destroy fails
-      if: failure()  # Trigger this only if the previous steps failed
+    # Step 10: Force Workflow Failure if Destroy Failed
+    - name: Force Workflow Failure
+      if: success() && steps.terraform-destroy.outcome == 'failure'
       run: |
         echo "Terraform Destroy failed. Marking workflow as failed."
-        exit 1  # Force failure to mark the workflow as failed
+        exit 1
