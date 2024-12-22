@@ -1,4 +1,4 @@
-name: Terraform Logging/Debugging Workflow with OIDC
+name: Terraform Workflow with OIDC and Artifact Upload
 
 on:
   push:
@@ -11,7 +11,7 @@ jobs:
 
     permissions:
       id-token: write  # Required for OIDC
-      contents: read
+      contents: read   # Required to access repository contents
 
     steps:
       # Step 1: Checkout the repository
@@ -24,14 +24,12 @@ jobs:
         with:
           terraform_version: 1.6.0
 
-      # Step 3: Configure AWS OIDC
-      - name: Configure AWS OIDC
-        run: |
-          echo "Configuring AWS OIDC"
-          ROLE_ARN="arn:aws:iam::<AWS_ACCOUNT_ID>:role/<ROLE_NAME>"
-          export AWS_ROLE_ARN=$ROLE_ARN
-          export AWS_REGION="us-east-1"
-          export AWS_WEB_IDENTITY_TOKEN_FILE=$(cat /tmp/aws_web_identity_token)
+      # Step 3: Configure AWS Credentials using OIDC
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ secrets.ROLE_NAME }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
       # Step 4: Initialize Terraform
       - name: Terraform Init
@@ -58,7 +56,18 @@ jobs:
           TF_LOG_PATH: terraform_apply.log
         run: terraform apply -auto-approve tfplan
 
-      # Step 8: Print Logs on Failure
+      # Step 8: Upload Artifacts (Logs)
+      - name: Upload Terraform Logs as Artifacts
+        if: always()  # Upload artifacts even if the workflow fails
+        uses: actions/upload-artifact@v3
+        with:
+          name: terraform-logs
+          path: |
+            terraform_validate.log
+            terraform_plan.log
+            terraform_apply.log
+
+      # Step 9: Print Logs on Failure
       - name: Print Logs on Failure
         if: failure()
         run: |
