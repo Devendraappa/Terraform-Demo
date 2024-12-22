@@ -1,4 +1,4 @@
-name: Terraform Workflow with OIDC and Artifact Upload 
+name: Terraform Workflow with OIDC and Artifact Upload
 
 on:
   push:
@@ -37,27 +37,33 @@ jobs:
 
       # Step 5: Terraform Validate
       - name: Terraform Validate
-        continue-on-error: true  # Continue even on error to capture logs
         env:
           TF_LOG: DEBUG
           TF_LOG_PATH: terraform_validate.log
-        run: terraform validate || true  # Allow failure but capture logs
+          FAILURE_FLAG: false
+        run: |
+          terraform validate || echo "FAILURE_FLAG=true" >> $GITHUB_ENV
+          true  # Always continue execution
 
       # Step 6: Terraform Plan
       - name: Terraform Plan
-        continue-on-error: true  # Continue even on error to capture logs
         env:
           TF_LOG: INFO
           TF_LOG_PATH: terraform_plan.log
-        run: terraform plan -out=tfplan || true  # Allow failure but capture logs
+          FAILURE_FLAG: false
+        run: |
+          terraform plan -out=tfplan || echo "FAILURE_FLAG=true" >> $GITHUB_ENV
+          true  # Always continue execution
 
       # Step 7: Terraform Apply
       - name: Terraform Apply
-        continue-on-error: true  # Continue even on error to capture logs
         env:
           TF_LOG: TRACE
           TF_LOG_PATH: terraform_apply.log
-        run: terraform apply -auto-approve tfplan || true  # Allow failure but capture logs
+          FAILURE_FLAG: false
+        run: |
+          terraform apply -auto-approve tfplan || echo "FAILURE_FLAG=true" >> $GITHUB_ENV
+          true  # Always continue execution
 
       # Step 8: Ensure Logs Directory Exists
       - name: Ensure Logs Directory Exists
@@ -66,19 +72,9 @@ jobs:
       # Step 9: Copy Logs to Logs Directory
       - name: Copy Logs to Logs Directory
         run: |
-          echo "Checking if log files exist"
-          if [ -f terraform_validate.log ]; then
-            echo "terraform_validate.log exists, copying to logs directory."
-            cp terraform_validate.log $GITHUB_WORKSPACE/logs/
-          fi
-          if [ -f terraform_plan.log ]; then
-            echo "terraform_plan.log exists, copying to logs directory."
-            cp terraform_plan.log $GITHUB_WORKSPACE/logs/
-          fi
-          if [ -f terraform_apply.log ]; then
-            echo "terraform_apply.log exists, copying to logs directory."
-            cp terraform_apply.log $GITHUB_WORKSPACE/logs/
-          fi
+          cp terraform_validate.log $GITHUB_WORKSPACE/logs/ || true
+          cp terraform_plan.log $GITHUB_WORKSPACE/logs/ || true
+          cp terraform_apply.log $GITHUB_WORKSPACE/logs/ || true
           echo "Files in logs directory:"
           ls -alh $GITHUB_WORKSPACE/logs/
 
@@ -99,9 +95,9 @@ jobs:
           name: terraform-logs
           path: logs/
 
-      # Step 12: Force Workflow Failure if Critical Steps Fail
-      - name: Force Workflow Failure if Critical Steps Fail
-        if: failure()  # Trigger this only if the previous steps failed
+      # Step 12: Force Workflow Failure if Any Step Failed
+      - name: Fail Workflow if Any Step Failed
+        if: ${{ env.FAILURE_FLAG == 'true' }}
         run: |
-          echo "Terraform failed. Marking workflow as failed."
-          exit 1  # Force failure to mark the workflow as failed
+          echo "One or more Terraform steps failed. Marking workflow as failed."
+          exit 1  # Exit with failure status
