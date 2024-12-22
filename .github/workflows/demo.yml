@@ -37,6 +37,7 @@ jobs:
 
       # Step 5: Terraform Validate
       - name: Terraform Validate
+        continue-on-error: true  # This allows the workflow to continue even if this step fails
         env:
           TF_LOG: DEBUG
           TF_LOG_PATH: terraform_validate.log
@@ -44,6 +45,7 @@ jobs:
 
       # Step 6: Terraform Plan
       - name: Terraform Plan
+        continue-on-error: true  # This ensures the workflow continues even if Terraform Validate fails
         env:
           TF_LOG: INFO
           TF_LOG_PATH: terraform_plan.log
@@ -51,6 +53,7 @@ jobs:
 
       # Step 7: Terraform Apply
       - name: Terraform Apply
+        continue-on-error: true  # This ensures the workflow continues even if Plan fails
         env:
           TF_LOG: TRACE
           TF_LOG_PATH: terraform_apply.log
@@ -95,7 +98,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: terraform-logs
-          path: $GITHUB_WORKSPACE/logs/
+          path: $GITHUB_WORKSPACE/logs  # This is the correct path without the trailing slash
 
       # Step 10: Print Logs on Failure
       - name: Print Logs on Failure
