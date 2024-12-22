@@ -33,10 +33,10 @@ jobs:
 
       # Step 4: Terraform Init
       - name: Terraform Init
-        run: terraform init || echo "FAILURE_FLAG=true" >> $GITHUB_ENV
         env:
           FAILURE_FLAG: false
-        run: true  # Always continue
+        run: |
+          terraform init || echo "FAILURE_FLAG=true" >> $GITHUB_ENV
 
       # Step 5: Terraform Destroy
       - name: Terraform Destroy
@@ -46,7 +46,6 @@ jobs:
           FAILURE_FLAG: false
         run: |
           terraform destroy -auto-approve || echo "FAILURE_FLAG=true" >> $GITHUB_ENV
-          true  # Always continue execution
 
       # Step 6: Ensure Logs Directory Exists
       - name: Ensure Logs Directory Exists
