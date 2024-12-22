@@ -105,7 +105,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: terraform-logs
-          path: $GITHUB_WORKSPACE/logs/
+          path: /logs
 
       # Step 13: Mark Workflow as Failed if Critical Steps Fail
       - name: Mark Workflow as Failed if Critical Steps Fail
