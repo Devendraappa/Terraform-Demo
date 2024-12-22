@@ -1,4 +1,4 @@
-name: Destroy Terraform Workflow 
+name: Destroy Terraform Workflow
 
 on:
   workflow_dispatch:
@@ -35,13 +35,14 @@ jobs:
     - name: Terraform Init
       run: terraform init
 
-    # Step 5: Terraform Destroy
+    # Step 5: Terraform Destroy with State Lock Handling
     - name: Terraform Destroy
-      id: terraform-destroy  # Save step result for conditional checks
+      id: terraform-destroy
       env:
         TF_LOG: TRACE
         TF_LOG_PATH: terraform_destroy.log
-      run: terraform destroy -auto-approve || echo "Terraform Destroy failed" > $GITHUB_WORKSPACE/destroy-failed
+      run: |
+        terraform destroy -auto-approve || echo "STATE_LOCK_ERROR" > $GITHUB_WORKSPACE/state_lock_error
 
     # Step 6: Ensure Logs Directory Exists
     - name: Ensure Logs Directory Exists
@@ -54,23 +55,25 @@ jobs:
           cp terraform_destroy.log $GITHUB_WORKSPACE/logs/
         fi
 
-    # Step 8: Print Logs on Failure
+    # Step 8: Detect State Lock or Errors and Fail Workflow
+    - name: Check for State Lock or Errors
+      if: success()  # Only run if previous steps completed
+      run: |
+        if [ -f $GITHUB_WORKSPACE/state_lock_error ]; then
+          echo "State lock detected or concurrent execution is preventing Terraform operations."
+          exit 1  # Explicitly fail the workflow
+        fi
+
+    # Step 9: Print Logs on Failure
     - name: Print Logs on Failure
       if: failure()
       run: |
         echo "Terraform Destroy failed. Logs are as follows:"
         cat $GITHUB_WORKSPACE/logs/terraform_destroy.log || true
 
-    # Step 9: Upload Terraform Destroy Logs as Artifacts
+    # Step 10: Upload Terraform Destroy Logs as Artifacts
     - name: Upload Terraform Destroy Logs as Artifacts
       uses: actions/upload-artifact@v3
       with:
         name: terraform-destroy-logs
         path: logs/
-
-    # Step 10: Force Workflow Failure if Destroy Failed
-    - name: Force Workflow Failure
-      if: success() && steps.terraform-destroy.outcome == 'failure'
-      run: |
-        echo "Terraform Destroy failed. Marking workflow as failed."
-        exit 1
