@@ -1,4 +1,4 @@
-name: Terraform Workflow with OIDC and Artifact Upload
+name: Terraform Workflow with OIDC and Artifact Upload 
 
 on:
   push:
@@ -40,21 +40,21 @@ jobs:
         env:
           TF_LOG: DEBUG
           TF_LOG_PATH: terraform_validate.log
-        run: terraform validate || echo "terraform validate failed"
+        run: terraform validate
 
       # Step 6: Terraform Plan
       - name: Terraform Plan
         env:
           TF_LOG: INFO
           TF_LOG_PATH: terraform_plan.log
-        run: terraform plan -out=tfplan || echo "terraform plan failed"
+        run: terraform plan -out=tfplan
 
       # Step 7: Terraform Apply
       - name: Terraform Apply
         env:
           TF_LOG: TRACE
           TF_LOG_PATH: terraform_apply.log
-        run: terraform apply -auto-approve tfplan || echo "terraform apply failed"
+        run: terraform apply -auto-approve tfplan
 
       # Step 8: Ensure Logs Directory Exists and Check Log Files
       - name: Ensure Logs Directory Exists and Check Log Files
@@ -89,15 +89,15 @@ jobs:
           echo "Files in logs directory:"
           ls -l $GITHUB_WORKSPACE/logs/
 
-      # Step 9: Upload Logs as Artifacts (Updated Path)
+      # Step 9: Upload Logs as Artifacts
       - name: Upload Terraform Logs as Artifacts
         if: always()  # Upload artifacts even if the workflow fails
         uses: actions/upload-artifact@v3
         with:
           name: terraform-logs
-          path: logs/  # Directly use relative path instead of $GITHUB_WORKSPACE
+          path: logs/
 
-      # Step 10: Print Logs on Failure (only if workflow fails)
+      # Step 10: Print Logs on Failure
       - name: Print Logs on Failure
         if: failure()
         run: |
