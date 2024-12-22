@@ -37,7 +37,7 @@ jobs:
 
       # Step 5: Terraform Validate
       - name: Terraform Validate
-        continue-on-error: true  # Continue even on error
+        continue-on-error: true  # Continue even on error to capture logs
         env:
           TF_LOG: DEBUG
           TF_LOG_PATH: terraform_validate.log
@@ -45,7 +45,7 @@ jobs:
 
       # Step 6: Terraform Plan
       - name: Terraform Plan
-        continue-on-error: true  # Continue even on error
+        continue-on-error: true  # Continue even on error to capture logs
         env:
           TF_LOG: INFO
           TF_LOG_PATH: terraform_plan.log
@@ -53,7 +53,7 @@ jobs:
 
       # Step 7: Terraform Apply
       - name: Terraform Apply
-        continue-on-error: true  # Continue even on error
+        continue-on-error: true  # Continue even on error to capture logs
         env:
           TF_LOG: TRACE
           TF_LOG_PATH: terraform_apply.log
@@ -99,9 +99,9 @@ jobs:
           name: terraform-logs
           path: $GITHUB_WORKSPACE/logs/
 
-      # Step 12: Mark Workflow as Failed if Critical Steps Fail
-      - name: Mark Workflow as Failed if Critical Steps Fail
+      # Step 12: Force Workflow Failure if Terraform fails
+      - name: Force Workflow Failure if Critical Steps Fail
         if: failure()  # Trigger this only if the previous steps failed
         run: |
           echo "Terraform failed. Marking workflow as failed."
-          exit 1  # Force failure here to mark the workflow as failed
+          exit 1  # Force failure to mark the workflow as failed
