@@ -1,4 +1,4 @@
-name: Terraform Workflow with OIDC and Artifact Upload 
+name: Terraform Workflow with OIDC and Artifact Upload
 
 on:
   push:
@@ -37,7 +37,7 @@ jobs:
 
       # Step 5: Terraform Validate
       - name: Terraform Validate
-        continue-on-error: true  # Continue even if it fails
+        continue-on-error: true  # Continue on error
         env:
           TF_LOG: DEBUG
           TF_LOG_PATH: terraform_validate.log
@@ -45,7 +45,7 @@ jobs:
 
       # Step 6: Terraform Plan
       - name: Terraform Plan
-        continue-on-error: true  # Continue even if it fails
+        continue-on-error: true  # Continue on error
         env:
           TF_LOG: INFO
           TF_LOG_PATH: terraform_plan.log
@@ -53,7 +53,7 @@ jobs:
 
       # Step 7: Terraform Apply
       - name: Terraform Apply
-        continue-on-error: true  # Continue even if it fails
+        continue-on-error: true  # Continue on error
         env:
           TF_LOG: TRACE
           TF_LOG_PATH: terraform_apply.log
@@ -82,17 +82,17 @@ jobs:
           echo "Files in logs directory:"
           ls -alh $GITHUB_WORKSPACE/logs/
 
-      # Step 10: Upload Terraform Logs as Artifacts
+      # Step 10: Upload Terraform Logs as Artifacts (Always, even on failure)
       - name: Upload Terraform Logs as Artifacts
-        if: always()  # Upload artifacts even if the workflow fails
+        if: always()  # Ensure this runs even if the workflow fails
         uses: actions/upload-artifact@v3
         with:
           name: terraform-logs
           path: $GITHUB_WORKSPACE/logs/
 
-      # Step 11: Ensure the Workflow Fails if Critical Steps Fail
-      - name: Ensure Workflow Fails if Critical Steps Fail
-        if: failure()  # Only run if previous steps fail
+      # Step 11: Mark Workflow as Failed if Critical Steps Fail
+      - name: Mark Workflow as Failed if Critical Steps Fail
+        if: failure()  # Trigger this only if the previous steps failed
         run: |
-          echo "Terraform failed. The workflow will now exit with a failure status."
-          exit 1
+          echo "Terraform failed. Marking workflow as failed."
+          exit 1  # Force failure here to mark the workflow as failed
