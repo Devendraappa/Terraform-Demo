@@ -32,7 +32,7 @@ jobs:
       run: terraform init
 
     - name: Terraform Destroy
-      continue-on-error: true
+      continue-on-error: false
       env:
         TF_LOG: TRACE
         TF_LOG_PATH: terraform_destroy.log
