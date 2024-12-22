@@ -90,11 +90,9 @@ jobs:
           name: terraform-logs
           path: $GITHUB_WORKSPACE/logs/
 
-      # Step 11: Print Logs on Failure
-      - name: Print Logs on Failure
-        if: failure()  # Print logs only if failure occurs
+      # Step 11: Ensure the Workflow Fails if Critical Steps Fail
+      - name: Ensure Workflow Fails if Critical Steps Fail
+        if: failure()  # Only run if previous steps fail
         run: |
-          echo "Terraform failed. Logs are as follows:"
-          cat $GITHUB_WORKSPACE/logs/terraform_validate.log || true
-          cat $GITHUB_WORKSPACE/logs/terraform_plan.log || true
-          cat $GITHUB_WORKSPACE/logs/terraform_apply.log || true
+          echo "Terraform failed. The workflow will now exit with a failure status."
+          exit 1
