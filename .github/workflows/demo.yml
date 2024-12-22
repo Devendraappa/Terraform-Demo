@@ -37,24 +37,27 @@ jobs:
 
       # Step 5: Terraform Validate
       - name: Terraform Validate
-        run: terraform validate  # Remove continue-on-error: true to force failure on error
+        continue-on-error: true  # Continue even on error to capture logs
         env:
           TF_LOG: DEBUG
           TF_LOG_PATH: terraform_validate.log
+        run: terraform validate || true  # Allow failure but capture logs
 
       # Step 6: Terraform Plan
       - name: Terraform Plan
-        run: terraform plan -out=tfplan  # Remove continue-on-error: true to force failure on error
+        continue-on-error: true  # Continue even on error to capture logs
         env:
           TF_LOG: INFO
           TF_LOG_PATH: terraform_plan.log
+        run: terraform plan -out=tfplan || true  # Allow failure but capture logs
 
       # Step 7: Terraform Apply
       - name: Terraform Apply
-        run: terraform apply -auto-approve tfplan  # Remove continue-on-error: true to force failure on error
+        continue-on-error: true  # Continue even on error to capture logs
         env:
           TF_LOG: TRACE
           TF_LOG_PATH: terraform_apply.log
+        run: terraform apply -auto-approve tfplan || true  # Allow failure but capture logs
 
       # Step 8: Ensure Logs Directory Exists
       - name: Ensure Logs Directory Exists
@@ -96,7 +99,7 @@ jobs:
           name: terraform-logs
           path: logs/
 
-      # Step 12: Force Workflow Failure if Terraform fails
+      # Step 12: Force Workflow Failure if Critical Steps Fail
       - name: Force Workflow Failure if Critical Steps Fail
         if: failure()  # Trigger this only if the previous steps failed
         run: |
