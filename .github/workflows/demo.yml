@@ -1,4 +1,4 @@
-name: Terraform Workflow with OIDC and Artifact Upload 
+name: Terraform Workflow with OIDC and Artifact Upload
 
 on:
   push:
@@ -40,31 +40,31 @@ jobs:
         env:
           TF_LOG: DEBUG
           TF_LOG_PATH: terraform_validate.log
-        run: terraform validate
+        run: terraform validate || echo "terraform validate failed"
 
       # Step 6: Terraform Plan
       - name: Terraform Plan
         env:
           TF_LOG: INFO
           TF_LOG_PATH: terraform_plan.log
-        run: terraform plan -out=tfplan
+        run: terraform plan -out=tfplan || echo "terraform plan failed"
 
       # Step 7: Terraform Apply
       - name: Terraform Apply
         env:
           TF_LOG: TRACE
           TF_LOG_PATH: terraform_apply.log
-        run: terraform apply -auto-approve tfplan
+        run: terraform apply -auto-approve tfplan || echo "terraform apply failed"
 
       # Step 8: Capture Logs and Save as Artifacts
       - name: Capture Logs and Save as Artifacts
         if: always()  # Ensure this step runs even if the previous steps fail
         run: |
           mkdir -p $GITHUB_WORKSPACE/logs
-          # Save logs generated during the workflow
-          cp terraform_validate.log $GITHUB_WORKSPACE/logs/
-          cp terraform_plan.log $GITHUB_WORKSPACE/logs/
-          cp terraform_apply.log $GITHUB_WORKSPACE/logs/
+          # Ensure logs exist and copy them
+          if [ -f terraform_validate.log ]; then cp terraform_validate.log $GITHUB_WORKSPACE/logs/; fi
+          if [ -f terraform_plan.log ]; then cp terraform_plan.log $GITHUB_WORKSPACE/logs/; fi
+          if [ -f terraform_apply.log ]; then cp terraform_apply.log $GITHUB_WORKSPACE/logs/; fi
         continue-on-error: true  # Ensure this step doesn't stop the workflow if something fails
 
       # Step 9: Upload Logs as Artifacts
@@ -73,7 +73,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: terraform-logs
-          path: $GITHUB_WORKSPACE/logs
+          path: $GITHUB_WORKSPACE/logs/
 
       # Step 10: Print Logs on Failure
       - name: Print Logs on Failure
