@@ -89,13 +89,13 @@ jobs:
           echo "Files in logs directory:"
           ls -l $GITHUB_WORKSPACE/logs/
 
-      # Step 9: Upload Logs as Artifacts
+      # Step 9: Upload Logs as Artifacts (Updated Path)
       - name: Upload Terraform Logs as Artifacts
         if: always()  # Upload artifacts even if the workflow fails
         uses: actions/upload-artifact@v3
         with:
           name: terraform-logs
-          path: $GITHUB_WORKSPACE/logs/
+          path: logs/  # Directly use relative path instead of $GITHUB_WORKSPACE
 
       # Step 10: Print Logs on Failure (only if workflow fails)
       - name: Print Logs on Failure
