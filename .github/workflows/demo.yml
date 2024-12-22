@@ -56,8 +56,8 @@ jobs:
           TF_LOG_PATH: terraform_apply.log
         run: terraform apply -auto-approve tfplan
 
-      # Step 8: Ensure Logs Directory Exists and Check Log Files
-      - name: Ensure Logs Directory Exists and Check Log Files
+      # Step 8: Ensure Logs Directory Exists and Copy Logs
+      - name: Ensure Logs Directory Exists and Copy Logs
         run: |
           echo "Checking if logs directory exists"
           mkdir -p $GITHUB_WORKSPACE/logs
@@ -95,7 +95,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: terraform-logs
-          path: logs/
+          path: $GITHUB_WORKSPACE/logs/
 
       # Step 10: Print Logs on Failure
       - name: Print Logs on Failure
