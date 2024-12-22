@@ -35,9 +35,12 @@ jobs:
     - name: Terraform Init
       run: terraform init
 
-    # Step 5: Terraform Destroy
+    # Step 5: Terraform Destroy (with logging)
     - name: Terraform Destroy
       continue-on-error: true  # Continue even on error to capture logs
+      env:
+        TF_LOG: TRACE  # Set logging level
+        TF_LOG_PATH: terraform_destroy.log  # Define log path
       run: terraform destroy -auto-approve
 
     # Step 6: Ensure Logs Directory Exists
