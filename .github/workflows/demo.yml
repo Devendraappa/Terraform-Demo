@@ -51,7 +51,15 @@ jobs:
           TF_LOG_PATH: terraform_plan.log
         run: terraform plan -out=tfplan
 
-      # Step 7: Terraform Apply
+      # Step 7: Check if tfplan file exists before apply
+      - name: Check if tfplan exists
+        run: |
+          if [ ! -f tfplan ]; then
+            echo "Terraform plan file (tfplan) not found. Skipping terraform apply."
+            exit 1  # Exit with error if tfplan doesn't exist
+          fi
+
+      # Step 8: Terraform Apply
       - name: Terraform Apply
         continue-on-error: true  # Continue on error
         env:
@@ -59,11 +67,11 @@ jobs:
           TF_LOG_PATH: terraform_apply.log
         run: terraform apply -auto-approve tfplan
 
-      # Step 8: Ensure Logs Directory Exists
+      # Step 9: Ensure Logs Directory Exists
       - name: Ensure Logs Directory Exists
         run: mkdir -p $GITHUB_WORKSPACE/logs
 
-      # Step 9: Copy Logs to Logs Directory
+      # Step 10: Copy Logs to Logs Directory
       - name: Copy Logs to Logs Directory
         run: |
           echo "Checking if log files exist"
@@ -82,7 +90,7 @@ jobs:
           echo "Files in logs directory:"
           ls -alh $GITHUB_WORKSPACE/logs/
 
-      # Step 10: Upload Terraform Logs as Artifacts (Always, even on failure)
+      # Step 11: Upload Terraform Logs as Artifacts (Always, even on failure)
       - name: Upload Terraform Logs as Artifacts
         if: always()  # Ensure this runs even if the workflow fails
         uses: actions/upload-artifact@v3
@@ -90,7 +98,7 @@ jobs:
           name: terraform-logs
           path: $GITHUB_WORKSPACE/logs/
 
-      # Step 11: Mark Workflow as Failed if Critical Steps Fail
+      # Step 12: Mark Workflow as Failed if Critical Steps Fail
       - name: Mark Workflow as Failed if Critical Steps Fail
         if: failure()  # Trigger this only if the previous steps failed
         run: |
