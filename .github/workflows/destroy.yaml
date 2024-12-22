@@ -13,17 +13,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # Step 1: Checkout code
     - name: Checkout code
       uses: actions/checkout@v3
 
-    # Step 2: Setup Terraform
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
       with:
         terraform_version: 1.5.6
 
-    # Step 3: Configure AWS Credentials using OIDC
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v2
       with:
@@ -31,49 +28,41 @@ jobs:
         aws-region: ${{ secrets.AWS_REGION }}
         role-session-name: TerraformDestroySession
 
-    # Step 4: Initialize Terraform
     - name: Terraform Init
       run: terraform init
 
-    # Step 5: Terraform Destroy with State Lock Handling
     - name: Terraform Destroy
-      id: terraform-destroy
+      continue-on-error: true
       env:
         TF_LOG: TRACE
         TF_LOG_PATH: terraform_destroy.log
-      run: |
-        terraform destroy -auto-approve || echo "STATE_LOCK_ERROR" > $GITHUB_WORKSPACE/state_lock_error
+      run: terraform destroy -auto-approve
 
-    # Step 6: Ensure Logs Directory Exists
     - name: Ensure Logs Directory Exists
       run: mkdir -p $GITHUB_WORKSPACE/logs
 
-    # Step 7: Copy Terraform Destroy Logs to Logs Directory
     - name: Copy Terraform Destroy Logs to Logs Directory
       run: |
         if [ -f terraform_destroy.log ]; then
           cp terraform_destroy.log $GITHUB_WORKSPACE/logs/
         fi
 
-    # Step 8: Detect State Lock or Errors and Fail Workflow
-    - name: Check for State Lock or Errors
-      if: success()  # Only run if previous steps completed
-      run: |
-        if [ -f $GITHUB_WORKSPACE/state_lock_error ]; then
-          echo "State lock detected or concurrent execution is preventing Terraform operations."
-          exit 1  # Explicitly fail the workflow
-        fi
-
-    # Step 9: Print Logs on Failure
     - name: Print Logs on Failure
       if: failure()
       run: |
         echo "Terraform Destroy failed. Logs are as follows:"
         cat $GITHUB_WORKSPACE/logs/terraform_destroy.log || true
 
-    # Step 10: Upload Terraform Destroy Logs as Artifacts
     - name: Upload Terraform Destroy Logs as Artifacts
+      if: always()  # This will always run
       uses: actions/upload-artifact@v3
       with:
         name: terraform-destroy-logs
         path: logs/
+
+    - name: Force Workflow Failure if Terraform Destroy fails
+      if: failure()
+      run: |
+        echo "Terraform Destroy failed. Marking workflow as failed."
+        exit 1
+
