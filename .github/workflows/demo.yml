@@ -56,14 +56,21 @@ jobs:
           TF_LOG_PATH: terraform_apply.log
         run: terraform apply -auto-approve tfplan || echo "terraform apply failed"
 
-      # Step 8: Ensure Logs Are Created and Uploaded
+      # Step 8: Debug and Create Logs Directory
+      - name: Debug and Create Logs Directory
+        run: |
+          echo "Debugging the environment"
+          echo "GITHUB_WORKSPACE is: $GITHUB_WORKSPACE"
+          mkdir -p $GITHUB_WORKSPACE/logs
+          echo "Logs directory created at: $GITHUB_WORKSPACE/logs"
+          ls -ld $GITHUB_WORKSPACE/logs  # This will list the created logs directory
+
+      # Step 9: Ensure Logs Are Created and Upload
       - name: Ensure Logs Are Created and Upload
         if: always()  # This step runs even if previous steps fail
         run: |
-          # Create the logs directory if it doesn't exist
-          mkdir -p $GITHUB_WORKSPACE/logs
-
           # Check if the log files exist and copy them to the logs directory
+          echo "Checking if log files exist..."
           if [ -f terraform_validate.log ]; then
             echo "terraform_validate.log exists, copying to logs directory."
             cp terraform_validate.log $GITHUB_WORKSPACE/logs/
@@ -85,7 +92,7 @@ jobs:
             echo "terraform_apply.log does not exist."
           fi
 
-      # Step 9: Upload Logs as Artifacts
+      # Step 10: Upload Logs as Artifacts
       - name: Upload Terraform Logs as Artifacts
         if: always()  # Upload artifacts even if the workflow fails
         uses: actions/upload-artifact@v3
@@ -93,7 +100,7 @@ jobs:
           name: terraform-logs
           path: $GITHUB_WORKSPACE/logs/
 
-      # Step 10: Print Logs on Failure
+      # Step 11: Print Logs on Failure
       - name: Print Logs on Failure
         if: failure()
         run: |
