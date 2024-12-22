@@ -1,0 +1,68 @@
+name: Terraform Logging/Debugging Workflow with OIDC
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write  # Required for OIDC
+      contents: read
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Terraform
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.6.0
+
+      # Step 3: Configure AWS OIDC
+      - name: Configure AWS OIDC
+        run: |
+          echo "Configuring AWS OIDC"
+          ROLE_ARN="arn:aws:iam::<AWS_ACCOUNT_ID>:role/<ROLE_NAME>"
+          export AWS_ROLE_ARN=$ROLE_ARN
+          export AWS_REGION="us-east-1"
+          export AWS_WEB_IDENTITY_TOKEN_FILE=$(cat /tmp/aws_web_identity_token)
+
+      # Step 4: Initialize Terraform
+      - name: Terraform Init
+        run: terraform init
+
+      # Step 5: Terraform Validate
+      - name: Terraform Validate
+        env:
+          TF_LOG: DEBUG
+          TF_LOG_PATH: terraform_validate.log
+        run: terraform validate
+
+      # Step 6: Terraform Plan
+      - name: Terraform Plan
+        env:
+          TF_LOG: INFO
+          TF_LOG_PATH: terraform_plan.log
+        run: terraform plan -out=tfplan
+
+      # Step 7: Terraform Apply
+      - name: Terraform Apply
+        env:
+          TF_LOG: TRACE
+          TF_LOG_PATH: terraform_apply.log
+        run: terraform apply -auto-approve tfplan
+
+      # Step 8: Print Logs on Failure
+      - name: Print Logs on Failure
+        if: failure()
+        run: |
+          echo "Terraform failed. Logs are as follows:"
+          cat terraform_validate.log || true
+          cat terraform_plan.log || true
+          cat terraform_apply.log || true
