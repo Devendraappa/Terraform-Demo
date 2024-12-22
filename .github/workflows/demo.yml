@@ -50,16 +50,8 @@ jobs:
           TF_LOG: INFO
           TF_LOG_PATH: terraform_plan.log
         run: terraform plan -out=tfplan
-*/
-      # Step 7: Check if tfplan file exists before apply
-     # - name: Check if tfplan exists
-        run: |
-          if [ ! -f tfplan ]; then
-            echo "Terraform plan file (tfplan) not found. Skipping terraform apply."
-            exit 1  # Exit with error if tfplan doesn't exist
-          fi
-*/
-      # Step 8: Terraform Apply
+
+      # Step 8: Terraform Apply (if tfplan exists)
       - name: Terraform Apply
         continue-on-error: true  # Continue on error to ensure logs are captured
         env:
