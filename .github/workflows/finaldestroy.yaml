@@ -1,4 +1,4 @@
-name: Destroy Terraform Workflow
+name: Destroy Terraform Workflow, upload logs to S3 and SNS Added
 
 on:
   workflow_dispatch:
