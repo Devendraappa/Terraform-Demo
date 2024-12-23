@@ -60,7 +60,7 @@ jobs:
           TF_LOG: WARN  # Set Terraform logging to WARN to capture potential issues
         run: |
           if [ -f terraform_destroy.log ]; then
-            cp terraform_destroy.log $GITHUB_WORKSPACE/logs/
+            cp terraform_destroy.log $GITHUB_WORKSPACE/destroylogs/
           fi
 
       # Step 8: Print Logs on Failure (ERROR logging)
