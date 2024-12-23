@@ -52,7 +52,7 @@ jobs:
       - name: Ensure Logs Directory Exists
         env:
           TF_LOG: DEBUG  # Set Terraform logging to DEBUG for detailed process steps
-        run: mkdir -p $GITHUB_WORKSPACE/logs
+        run: mkdir -p $GITHUB_WORKSPACE/destroylogs
 
       # Step 7: Copy Terraform Destroy Logs to Logs Directory (WARN logging)
       - name: Copy Terraform Destroy Logs to Logs Directory
@@ -78,7 +78,13 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: terraform-destroy-logs
-          path: logs/
+          path: destroylogs/
+
+      # Step 12: Upload Logs to S3 (Both Success and Failure)
+      - name: Upload Logs to S3
+        if: always()  # Ensure this runs even if the workflow fails
+        run: |
+          aws s3 cp $GITHUB_WORKSPACE/destroylogs/ s3://${{ secrets.S3_BUCKET_NAME }}/destroylogs/ --recursive
 
       # Step 10: Fail Workflow if Terraform Destroy Fails
       - name: Fail Workflow if Terraform Destroy Fails
