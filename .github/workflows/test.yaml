@@ -99,8 +99,14 @@ jobs:
         with:
           name: terraform-logs
           path: logs/
+      
+      # Step 12: Upload Logs to S3 (Both Success and Failure)
+      - name: Upload Logs to S3
+        if: always()  # Ensure this runs even if the workflow fails
+        run: |
+          aws s3 cp $GITHUB_WORKSPACE/logs/ s3://${{ secrets.S3_BUCKET_NAME }}/logs/ --recursive
 
-      # Step 12: Send SNS Notification (Success or Failure)
+      # Step 13: Send SNS Notification (Success or Failure)
       - name: Send SNS Notification
         if: always()  # Ensure this runs even if the workflow fails or succeeds
         run: |
@@ -121,7 +127,7 @@ jobs:
         env:
           AWS_REGION: ${{ secrets.AWS_REGION }}
 
-      # Step 13: Force Workflow Failure if Any Step Failed
+      # Step 14: Force Workflow Failure if Any Step Failed
       - name: Fail Workflow if Any Step Failed
         if: ${{ env.FAILURE_FLAG == 'true' }}
         run: |
