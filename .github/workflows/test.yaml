@@ -1,4 +1,4 @@
-name: Terraform Workflow with OIDC, S3 Logging, and Email Notification
+name: Terraform Workflow with OIDC, S3 Logging, and Email Notification 
 
 on:
   push:
