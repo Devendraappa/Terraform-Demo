@@ -1,7 +1,7 @@
 name: Terraform Workflow with OIDC and Artifact Upload
 
 on:
-  #push:
+  push:
     branches:
       - main
 
