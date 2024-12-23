@@ -1,4 +1,4 @@
-name: Terraform Workflow with OIDC, SNS Notification, and Artifact Upload 
+name: Terraform Workflow with OIDC, SNS Notification, and Artifact Upload
 
 on:
   push:
@@ -58,7 +58,7 @@ jobs:
       # Step 7: Terraform Apply (TRACE logging)
       - name: Terraform Apply
         env:
-          TF_OG: TRACE  # Set Terraform logging to TRACE for detailed logs
+          TF_LOG: TRACE  # Set Terraform logging to TRACE for detailed logs
           TF_LOG_PATH: terraform_apply.log
         run: |
           terraform apply -auto-approve tfplan || echo "FAILURE_FLAG=true" >> $GITHUB_ENV
@@ -113,6 +113,7 @@ jobs:
             BODY="The Terraform workflow has completed successfully. Please check the logs for details."
           fi
 
+          # Publish the SNS message with the status
           aws sns publish \
             --topic-arn arn:aws:sns:${{ secrets.AWS_REGION }}:${{ secrets.AWS_ACCOUNT_ID }}:${{ secrets.SNS_TOPIC_NAME }} \
             --message "$BODY" \
