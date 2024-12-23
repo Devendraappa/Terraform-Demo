@@ -54,7 +54,7 @@ jobs:
           TF_LOG_PATH: terraform_plan.log
           FAILURE_FLAG: false
         run: |
-          terraform pln -out=tfplan || echo "FAILURE_FLAG=true" >> $GITHUB_ENV
+          terraform plan -out=tfplan || echo "FAILURE_FLAG=true" >> $GITHUB_ENV
           true  # Always continue execution
 
       # Step 7: Terraform Apply (TRACE logging)
@@ -107,9 +107,15 @@ jobs:
       - name: Send SNS Notification
         if: always()  # Ensure this runs even if the workflow fails or succeeds
         run: |
-          SUBJECT="Terraform Workflow Status - ${{ job.status }}"
-          BODY="The Terraform workflow has completed with status: ${{ job.status }}. Please check the logs for details."
-          
+          # Set the appropriate subject and message
+          if [[ "${{ job.status }}" == "success" ]]; then
+            SUBJECT="Terraform Workflow Status - success"
+            BODY="The Terraform workflow has completed successfully. Please check the logs for details."
+          else
+            SUBJECT="Terraform Workflow Status - failure"
+            BODY="The Terraform workflow has failed. Please check the logs for details."
+          fi
+
           aws sns publish \
             --topic-arn arn:aws:sns:${{ secrets.AWS_REGION }}:${{ secrets.AWS_ACCOUNT_ID }}:${{ secrets.SNS_TOPIC_NAME }} \
             --message "$BODY" \
