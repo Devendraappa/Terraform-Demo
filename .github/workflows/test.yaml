@@ -1,4 +1,4 @@
-name: Terraform Workflow with OIDC, S3 Logging, and Email Notification 
+name: Terraform Workflow with OIDC, S3 Logging, and SNS Notification
 
 on:
   push:
@@ -101,16 +101,16 @@ jobs:
           cat $GITHUB_WORKSPACE/logs/terraform_plan.log || true
           cat $GITHUB_WORKSPACE/logs/terraform_apply.log || true
 
-      # Step 12: Send Email Notification (Success or Failure)
-      - name: Send Email Notification
+      # Step 12: Send SNS Notification (Success or Failure)
+      - name: Send SNS Notification
         if: always()  # Ensure this runs even if the workflow fails
         run: |
           SUBJECT="Terraform Workflow Status - ${{ job.status }}"
-          BODY="The Terraform workflow has completed with status: ${{ job.status }}. Please check the logs for details."
-          aws ses send-email \
-            --from ${{ secrets.SENDER_EMAIL }} \
-            --destination "ToAddresses=${{ secrets.RECIPIENT_EMAIL }}" \
-            --message "Subject={Data=$SUBJECT},Body={Text={Data=$BODY}}"
+          MESSAGE="The Terraform workflow has completed with status: ${{ job.status }}. Please check the logs for details."
+          aws sns publish \
+            --topic-arn arn:aws:sns:${{ secrets.AWS_REGION }}:${{ secrets.AWS_ACCOUNT_ID }}:topic/${{ secrets.SNS_TOPIC_NAME }} \
+            --subject "$SUBJECT" \
+            --message "$MESSAGE"
 
       # Step 13: Force Workflow Failure if Any Step Failed
       - name: Fail Workflow if Any Step Failed
