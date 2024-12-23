@@ -1,4 +1,4 @@
-name: Terraform Workflow with OIDC, S3 Logging, and SNS Notification
+name: Terraform Workflow with OIDC, SNS Notification, and Artifact Upload
 
 on:
   push:
@@ -84,13 +84,7 @@ jobs:
           echo "Files in logs directory:"
           ls -alh $GITHUB_WORKSPACE/logs/
 
-      # Step 10: Upload Logs to S3 (Both Success and Failure)
-      - name: Upload Logs to S3
-        if: always()  # Ensure this runs even if the workflow fails
-        run: |
-          aws s3 cp $GITHUB_WORKSPACE/logs/ s3://${{ secrets.S3_BUCKET_NAME }}/logs/ --recursive
-
-      # Step 11: Print Logs on Failure (ERROR logging)
+      # Step 10: Print Logs on Failure (ERROR logging)
       - name: Print Logs on Failure
         if: failure()  # Only print logs if failure occurs
         env:
@@ -101,16 +95,29 @@ jobs:
           cat $GITHUB_WORKSPACE/logs/terraform_plan.log || true
           cat $GITHUB_WORKSPACE/logs/terraform_apply.log || true
 
+      # Step 11: Upload Terraform Logs as Artifacts (Always, even on failure)
+      - name: Upload Terraform Logs as Artifacts
+        if: always()  # Ensure this runs even if the workflow fails
+        uses: actions/upload-artifact@v3
+        with:
+          name: terraform-logs
+          path: logs/
+
       # Step 12: Send SNS Notification (Success or Failure)
       - name: Send SNS Notification
-        if: always()  # Ensure this runs even if the workflow fails
+        if: always()  # Ensure this runs even if the workflow fails or succeeds
         run: |
           SUBJECT="Terraform Workflow Status - ${{ job.status }}"
-          MESSAGE="The Terraform workflow has completed with status: ${{ job.status }}. Please check the logs for details."
+          BODY="The Terraform workflow has completed with status: ${{ job.status }}. Please check the logs for details."
+          
           aws sns publish \
-            --topic-arn arn:aws:sns:${{ secrets.AWS_REGION }}:${{ secrets.AWS_ACCOUNT_ID }}:topic/${{ secrets.SNS_TOPIC_NAME }} \
-            --subject "$SUBJECT" \
-            --message "$MESSAGE"
+            --topic-arn arn:aws:sns:${{ secrets.AWS_REGION }}:${{ secrets.AWS_ACCOUNT_ID }}:${{ secrets.SNS_TOPIC_NAME }} \
+            --message "$BODY" \
+            --subject "$SUBJECT"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
 
       # Step 13: Force Workflow Failure if Any Step Failed
       - name: Fail Workflow if Any Step Failed
