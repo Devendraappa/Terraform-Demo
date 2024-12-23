@@ -58,7 +58,7 @@ jobs:
       # Step 7: Terraform Apply (TRACE logging)
       - name: Terraform Apply
         env:
-          TF_LOG: TRACE  # Set Terraform logging to TRACE for detailed logs
+          TF_OG: TRACE  # Set Terraform logging to TRACE for detailed logs
           TF_LOG_PATH: terraform_apply.log
         run: |
           terraform apply -auto-approve tfplan || echo "FAILURE_FLAG=true" >> $GITHUB_ENV
