@@ -29,7 +29,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v2
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ secrets.ROLE_NAME }}
-          aws-region: ${{ secrets.AWS_REGIO }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
       # Step 4: Initialize Terraform (INFO logging)
       - name: Terraform Init
@@ -54,7 +54,7 @@ jobs:
           TF_LOG_PATH: terraform_plan.log
           FAILURE_FLAG: false
         run: |
-          terraform plan -out=tfplan || echo "FAILURE_FLAG=true" >> $GITHUB_ENV
+          terraform pln -out=tfplan || echo "FAILURE_FLAG=true" >> $GITHUB_ENV
           true  # Always continue execution
 
       # Step 7: Terraform Apply (TRACE logging)
