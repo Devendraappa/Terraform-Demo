@@ -42,7 +42,6 @@ jobs:
         env:
           TF_LOG: DEBUG  # Set Terraform logging to DEBUG for detailed logs
           TF_LOG_PATH: terraform_validate.log
-          FAILURE_FLAG: false
         run: |
           terraform validate || echo "FAILURE_FLAG=true" >> $GITHUB_ENV
           true  # Always continue execution
@@ -52,7 +51,6 @@ jobs:
         env:
           TF_LOG: INFO  # Set Terraform logging to INFO for plan-related logs
           TF_LOG_PATH: terraform_plan.log
-          FAILURE_FLAG: false
         run: |
           terraform plan -out=tfplan || echo "FAILURE_FLAG=true" >> $GITHUB_ENV
           true  # Always continue execution
@@ -62,7 +60,6 @@ jobs:
         env:
           TF_LOG: TRACE  # Set Terraform logging to TRACE for detailed logs
           TF_LOG_PATH: terraform_apply.log
-          FAILURE_FLAG: false
         run: |
           terraform apply -auto-approve tfplan || echo "FAILURE_FLAG=true" >> $GITHUB_ENV
           true  # Always continue execution
@@ -107,12 +104,13 @@ jobs:
       - name: Send SNS Notification
         if: always()  # Ensure this runs even if the workflow fails or succeeds
         run: |
-          if [[ "${{ job.status }}" == "success" ]]; then
-            SUBJECT="Terraform Workflow Status - success"
-            BODY="The Terraform workflow has completed successfully. Please check the logs for details."
-          else
+          # Check the FAILURE_FLAG to determine whether the workflow failed
+          if [[ "${{ env.FAILURE_FLAG }}" == "true" ]]; then
             SUBJECT="Terraform Workflow Status - failure"
             BODY="The Terraform workflow has failed. Please check the logs for details."
+          else
+            SUBJECT="Terraform Workflow Status - success"
+            BODY="The Terraform workflow has completed successfully. Please check the logs for details."
           fi
 
           aws sns publish \
