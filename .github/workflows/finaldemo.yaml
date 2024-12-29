@@ -1,7 +1,7 @@
 name: Terraform Workflow with OIDC, SNS Notification, and Logs Upload to s3
 
 on:
-  #push:
+  push:
     branches:
       - main
 
